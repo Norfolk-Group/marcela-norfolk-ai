@@ -1,3 +1,4 @@
+# build: 2026-05-04-neon-rag
 #!/usr/bin/env python3
 """
 Marcela — Gemini-powered AI Agent for Norfolk AI
