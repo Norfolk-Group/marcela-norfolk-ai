@@ -269,7 +269,7 @@ The most effective workflow: write prompt → create simulation tests → run �
 ## Pending Work
 
 - ~~Resolve Meta/WABA error 63112~~ — RESOLVED May 2, 2026
-- **Add `VERCEL_TOKEN` GitHub secret** to Norfolk-Group/marcela-norfolk-ai repo for auto-deploy workflow to work
+- ~~Add `VERCEL_TOKEN` GitHub secret~~ — auto-deploy confirmed working
 - Verify `+19109944861` in Meta WhatsApp Business to bring Norfolk AI Voice Digest sender online
 - Google Calendar OAuth reconnection (3 accounts — Ricardo must do manually)
 - Clean up the empty messaging service `MG21f0694cd1b2566a13873571d2106728`
@@ -277,6 +277,23 @@ The most effective workflow: write prompt → create simulation tests → run �
 - Widget deployment to norfolk.ai
 - Final end-to-end verification via actual phone call
 - A2P Campaign registration for US long code (Twilio is prompting for this)
+
+### Security hardening — pending (May 18, 2026)
+
+Identified in the Phase 9 audit. Require action in external dashboards — code is already deployed.
+
+1. **[CRITICAL] Rotate Neon database password** — `npg_FzJ7UljOwhL9` is in git history from Phase 9 ingestion scripts. Rotate in Neon console → Project Settings → Roles → neondb_owner → Reset password. Update `DATABASE_URL` in Vercel env vars immediately after.
+
+2. **[CRITICAL] Rotate ElevenLabs API key** — `sk_8e1100d6…` was committed in `create_elevenlabs_agent.py`. Revoke in ElevenLabs dashboard → API Keys. Add new key to Vercel as `ELEVENLABS_API_KEY`.
+
+3. **[HIGH] Wire Telegram webhook secret** — Telegram endpoint now returns 403 until configured:
+   - Generate a random 32+ character string
+   - Add to Vercel env as `TELEGRAM_WEBHOOK_SECRET`
+   - Re-register: `GET https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://marcela-norfolk-ai.vercel.app/webhook&secret_token=<SECRET>`
+
+4. **[HIGH] Confirm `TWILIO_AUTH_TOKEN` in Vercel** — `/webhook` now returns 403 if missing. Verify in Vercel → Settings → Environment Variables.
+
+5. **[HIGH] Confirm `SLACK_SIGNING_SECRET` in Vercel** — Slack events are rejected if absent (endpoint now fails closed). Verify in Vercel env vars.
 
 ---
 
