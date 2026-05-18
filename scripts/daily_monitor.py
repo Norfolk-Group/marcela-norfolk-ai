@@ -41,7 +41,7 @@ HEALTH_URL       = "https://marcela-norfolk-ai.vercel.app/health"
 WEBHOOK_URL      = "https://marcela-norfolk-ai.vercel.app/webhook"
 VERCEL_DASHBOARD = "https://vercel.com/norfolk-ai-projects/marcela-norfolk-ai"
 
-TWILIO_SID       = os.environ.get("TWILIO_ACCOUNT_SID", "AC2354928595411f3e4156a44683af210d")
+TWILIO_SID       = os.environ.get("TWILIO_ACCOUNT_SID", "")
 TWILIO_TOKEN     = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TWILIO_API_BASE  = f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_SID}"
 

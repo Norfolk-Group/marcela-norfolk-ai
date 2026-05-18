@@ -17,14 +17,14 @@ from psycopg2.extras import execute_values
 
 # ── Config ───────────────────────────────────────────────────────────────────
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql://neondb_owner:npg_FzJ7UljOwhL9@ep-muddy-math-am33g1dk-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-)
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+DATABASE_URL = os.environ["DATABASE_URL"]
+GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 EMBED_MODEL = "gemini-embedding-001"
 EMBED_DIM = 3072  # gemini-embedding-001 outputs 3072 dimensions
-CHUNKS_FILE = "/home/ubuntu/marcela-norfolk-ai/scripts/kb_chunks.json"
+CHUNKS_FILE = os.environ.get(
+    "KB_CHUNKS_FILE",
+    os.path.join(os.path.dirname(__file__), "kb_chunks.json"),
+)
 
 # ── Gemini Embedding ─────────────────────────────────────────────────────────
 

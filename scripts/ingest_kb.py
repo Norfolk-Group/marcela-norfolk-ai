@@ -9,11 +9,14 @@ import psycopg2
 from psycopg2.extras import execute_values
 import requests
 
-DB_URL = "postgresql://neondb_owner:npg_FzJ7UljOwhL9@ep-muddy-math-am33g1dk-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+DB_URL = os.environ["DATABASE_URL"]
 GEMINI_KEY = os.environ["GEMINI_API_KEY"]
 EMBED_MODEL = "gemini-embedding-001"
 EMBED_DIM = 3072
-CHUNKS_FILE = "/home/ubuntu/marcela-norfolk-ai/scripts/kb_chunks.json"
+CHUNKS_FILE = os.environ.get(
+    "KB_CHUNKS_FILE",
+    os.path.join(os.path.dirname(__file__), "kb_chunks.json"),
+)
 
 EMBED_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{EMBED_MODEL}:embedContent?key={GEMINI_KEY}"
 

@@ -15,7 +15,7 @@ from datetime import datetime
 
 # Configuration
 HEALTH_URL = "https://marcela-norfolk-ai.vercel.app/health"
-TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "AC2354928595411f3e4156a44683af210d")
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 ALERT_TO = os.environ.get("ALERT_TO", "whatsapp:+15126699705")   # Ricardo's number
 ALERT_FROM = os.environ.get("ALERT_FROM", "whatsapp:+15559178507")  # Marcela's number
