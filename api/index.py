@@ -10,6 +10,7 @@ RAG:       Neon pgvector (Norfolk AI knowledge base, gemini-embedding-001, 3072 
 Voice:     Mel Robbins-inspired — direct, warm, witty, action-oriented
 """
 
+import base64
 import os
 import re
 import json
@@ -32,8 +33,9 @@ SLACK_BOT_TOKEN      = os.environ.get("SLACK_BOT_TOKEN", "")
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET", "")
 SLACK_BOT_USER_ID    = os.environ.get("SLACK_BOT_USER_ID", "")
 
-TELEGRAM_BOT_TOKEN    = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "MarcelaNorfolkAI_bot")
+TELEGRAM_BOT_TOKEN      = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_BOT_USERNAME   = os.environ.get("TELEGRAM_BOT_USERNAME", "MarcelaNorfolkAI_bot")
+TELEGRAM_WEBHOOK_SECRET = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "")
 
 GEMINI_API_KEY  = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL    = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
@@ -514,9 +516,38 @@ def send_whatsapp_message(to: str, body: str):
             logger.error(f"WhatsApp send error: {e}")
 
 
+def verify_twilio_signature(request) -> bool:
+    """
+    Verify the X-Twilio-Signature header per
+    https://www.twilio.com/docs/usage/webhooks/webhooks-security.
+    Returns False when the auth token isn't configured (fail closed).
+    """
+    if not TWILIO_AUTH_TOKEN:
+        logger.error("TWILIO_AUTH_TOKEN unset — refusing to authenticate request")
+        return False
+    signature = request.headers.get("X-Twilio-Signature", "")
+    if not signature:
+        return False
+    # Twilio signs the URL it POSTed to. Behind Vercel's proxy, reconstruct
+    # from forwarded headers; fall back to the WSGI-visible URL.
+    proto = request.headers.get("X-Forwarded-Proto", request.scheme)
+    host = request.headers.get("X-Forwarded-Host") or request.headers.get("Host", "")
+    url = f"{proto}://{host}{request.path}"
+    params = request.form.to_dict(flat=True)
+    data = url + "".join(k + params[k] for k in sorted(params))
+    expected = base64.b64encode(
+        hmac.new(TWILIO_AUTH_TOKEN.encode(), data.encode("utf-8"), hashlib.sha1).digest()
+    ).decode()
+    return hmac.compare_digest(expected, signature)
+
+
 @app.route("/whatsapp", methods=["POST"])
 @app.route("/webhook", methods=["POST"])
 def whatsapp_webhook():
+    if not verify_twilio_signature(request):
+        logger.warning("Twilio signature verification failed")
+        return Response("Unauthorized", status=403)
+
     form = request.form
     body = form.get("Body", "").strip()
     from_number = form.get("From", "")
@@ -557,7 +588,8 @@ def whatsapp_webhook():
 # ---------------------------------------------------------------------------
 def verify_slack_signature(body: bytes, timestamp: str, signature: str) -> bool:
     if not SLACK_SIGNING_SECRET:
-        return True
+        logger.error("SLACK_SIGNING_SECRET unset — refusing to authenticate request")
+        return False
     try:
         if abs(time.time() - float(timestamp)) > 300:
             return False
@@ -700,9 +732,26 @@ def telegram_send_message(chat_id, text, reply_to_message_id=None):
             logger.error(f"Telegram API error: {e}")
 
 
+def verify_telegram_secret(request) -> bool:
+    """
+    Telegram sends X-Telegram-Bot-Api-Secret-Token equal to the secret
+    registered via setWebhook. Returns False if the env var is unset
+    (fail closed).
+    """
+    if not TELEGRAM_WEBHOOK_SECRET:
+        logger.error("TELEGRAM_WEBHOOK_SECRET unset — refusing to authenticate request")
+        return False
+    received = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+    return hmac.compare_digest(received, TELEGRAM_WEBHOOK_SECRET)
+
+
 @app.route("/telegram", methods=["POST"])
 @app.route("/telegram-webhook", methods=["POST"])
 def telegram_webhook():
+    if not verify_telegram_secret(request):
+        logger.warning("Telegram secret token verification failed")
+        return Response("Unauthorized", status=403)
+
     data = request.get_json(force=True, silent=True) or {}
     message = data.get("message", {})
 
