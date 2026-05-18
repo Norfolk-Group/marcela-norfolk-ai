@@ -515,6 +515,7 @@ def send_whatsapp_message(to: str, body: str):
 
 
 @app.route("/whatsapp", methods=["POST"])
+@app.route("/webhook", methods=["POST"])
 def whatsapp_webhook():
     form = request.form
     body = form.get("Body", "").strip()
@@ -700,6 +701,7 @@ def telegram_send_message(chat_id, text, reply_to_message_id=None):
 
 
 @app.route("/telegram", methods=["POST"])
+@app.route("/telegram-webhook", methods=["POST"])
 def telegram_webhook():
     data = request.get_json(force=True, silent=True) or {}
     message = data.get("message", {})
